@@ -1,0 +1,28 @@
+[package]
+name = "simple-voting-app"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "simple_voting_app"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+
+
+[dependencies]
+anchor-lang = "0.31.1"
+
+[dev-dependencies]
+solana-program-test = "3.0.0"
+solana-system-program = "3.0.0"
+solana-sdk = "3.0.0"
+solana-program = "3.0.0"
+tokio = { version = "1", features = ["full"] }

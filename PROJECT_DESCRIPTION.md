@@ -1,79 +1,91 @@
 # Project Description
 
-**Deployed Frontend URL:** [TODO: Link to your deployed frontend]
+**Deployed Frontend URL:** [LINK](https://simple-voting-app-seven.vercel.app)
 
-**Solana Program ID:** [TODO: Your deployed program's public key]
+**Solana Program ID:** Ak88q7XogJ5Hq2uUG4oPvA95JzcE3t35BMDujfC4Rd5c (DEVNET)
 
 ## Project Overview
 
 ### Description
-[TODO: Provide a comprehensive description of your dApp. Explain what it does. Be detailed about the core functionality.]
+A decentralized voting application built on Solana. Users can create polls, add candidates, and vote for their preferred candidate. All poll and candidate data is stored on-chain using Program Derived Addresses (PDAs) for deterministic and secure account management.
 
 ### Key Features
-[TODO: List the main features of your dApp. Be specific about what users can do.]
+ - **Create Poll**: Initialize a new poll with a description and voting time window.
+ - **Add Candidate**: Add candidates to a poll.
+ - **Vote**: Cast votes for candidates in a poll.
+ - **Delete Poll**: Remove a poll and zero all candidate votes (candidate accounts remain on-chain, but votes are reset).
+ - **View Results**: Display poll details and candidate vote counts.
 
-- Feature 1: [Description]
-- Feature 2: [Description]
-- ...
-  
 ### How to Use the dApp
-[TODO: Provide step-by-step instructions for users to interact with your dApp]
-
-1. **Connect Wallet**
-2. **Main Action 1:** [Step-by-step instructions]
-3. **Main Action 2:** [Step-by-step instructions]
-4. ...
+1. **Connect Wallet** - Connect your Solana wallet.
+2. **Create Poll** - Set up a poll with a description and time window.
+3. **Add Candidates** - Add candidates to your poll.
+4. **Vote** - Cast your vote for a candidate in a poll.
+5. **Delete Poll** - Remove a poll and its candidates using the Delete button in the UI. Candidate votes will be zeroed, but accounts remain.
+6. **View Results** - See poll and candidate statistics.
 
 ## Program Architecture
-[TODO: Describe your Solana program's architecture. Explain the main instructions, account structures, and data flow.]
+The voting app uses PDAs to manage poll and candidate accounts. Each poll and candidate is uniquely identified and stored on-chain.
 
 ### PDA Usage
-[TODO: Explain how you implemented Program Derived Addresses (PDAs) in your project. What seeds do you use and why?]
-
-**PDAs Used:**
-- PDA 1: [Purpose and description]
-- PDA 2: [Purpose and description]
+- **Poll PDA**: Derived from `[poll_id]` (as little-endian bytes).
+- **Candidate PDA**: Derived from `[candidate_name, poll_id]`.
 
 ### Program Instructions
-[TODO: List and describe all the instructions in your Solana program]
-
-**Instructions Implemented:**
-- Instruction 1: [Description of what it does]
-- Instruction 2: [Description of what it does]
-- ...
+ - **initialize_poll**: Creates a new poll.
+ - **initialize_candidate**: Adds a candidate to a poll.
+ - **vote**: Casts a vote for a candidate.
+ - **delete_poll**: Deletes a poll and zeroes all candidate votes. Candidate accounts are not closed, but their votes are reset to zero. (Direct data modification is used for arbitrary-length candidate lists, as Anchor does not support dynamic account lists in instruction context.)
 
 ### Account Structure
-[TODO: Describe your main account structures and their purposes]
 
 ```rust
-// Example account structure (replace with your actual structs)
 #[account]
-pub struct YourAccountName {
-    // Describe each field
+pub struct Poll {
+    pub poll_id: u64,           // Unique identifier for the poll (used as PDA seed)
+    pub poll_start: u64,        // Unix timestamp when the poll starts
+    pub poll_end: u64,          // Unix timestamp when the poll ends
+    pub candidate_amount: u64,  // Number of candidates in the poll
+    pub description: String,    // Description of the poll/question
+}
+
+#[account]
+pub struct Candidate {
+    pub poll_id: u64,           // The poll this candidate belongs to (used as PDA seed)
+    pub candidate_votes: u64,   // Number of votes received by this candidate
+    pub candidate_name: String, // Candidate's name (used as PDA seed)
 }
 ```
 
 ## Testing
 
 ### Test Coverage
-[TODO: Describe your testing approach and what scenarios you covered]
+
+Comprehensive test suite covering poll creation, candidate addition, voting, poll deletion, and error scenarios to ensure program reliability.
 
 **Happy Path Tests:**
-- Test 1: [Description]
-- Test 2: [Description]
-- ...
+ - **Initialize Poll**: Successfully creates a poll with correct initial values.
+ - **Initialize Candidate**: Properly adds candidates to a poll.
+ - **Vote**: Correctly increments candidate vote count.
+ - **Delete Poll**: Successfully deletes a poll and zeroes all candidate votes. Candidate accounts remain, but their votes are reset.
 
 **Unhappy Path Tests:**
-- Test 1: [Description of error scenario]
-- Test 2: [Description of error scenario]
-- ...
+ - **Duplicate Poll/Candidate**: Fails when trying to create a poll or candidate that already exists.
+ - **Invalid Vote**: Fails when voting for a non-existent candidate or poll.
+ - **Delete Non-existent Poll**: Fails when trying to delete a poll that does not exist.
 
 ### Running Tests
 ```bash
-# Commands to run your tests
-anchor test
+yarn install    # install dependencies
+anchor test     # run tests, includes bankrun
+cargo test-sbf  # run Rust tests
 ```
 
 ### Additional Notes for Evaluators
 
-[TODO: Add any specific notes or context that would help evaluators understand your project better]
+This project demonstrates on-chain voting logic using Solana and Anchor. PDAs are used for secure and deterministic account management. The main challenges were designing the PDA structure, ensuring correct account initialization and access control, and implementing robust poll deletion. Due to Anchor's limitations with dynamic account lists, candidate votes are zeroed via direct data modification when deleting a poll, rather than closing candidate accounts.
+
+The happy path tests are replicated using:
+- bankrun
+- cargo test-sbf
+- normal anchor tests
